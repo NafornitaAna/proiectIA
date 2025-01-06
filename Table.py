@@ -157,13 +157,8 @@ class SimpleCheckersApp:
         self.root.quit()
 
     def show_about(self):
-        about_text = (
-            "Algoritmul minimax\r\n" 
-            "Inteligenta artificiala, Laboratorul 7\r\n" 
-            "(c)2024 Florin Leon\r\n" 
-            "http://florinleon.byethost24.com/lab_ia.html"
-        )
-        messagebox.showinfo("Despre jocul Dame simple", about_text)
+        about_text = ("Joc de dame")
+        messagebox.showinfo("Despre jocul Dame", about_text)
 
 if __name__ == "__main__":
     root = tk.Tk()

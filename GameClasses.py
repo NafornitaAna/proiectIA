@@ -1,3 +1,19 @@
+import random
+
+class PlayerType:
+    NoPlayer = 0
+    Computer = 1
+    Human = 2
+
+class Move:
+    """
+    Reprezinta mutarea unei singure piese
+    """
+    def __init__(self, piece_id, new_x, new_y):
+        self.piece_id = piece_id
+        self.new_x = new_x
+        self.new_y = new_y
+
 class Piece:
     def __init__(self, x, y, piece_id, player, is_king=False):
         self.x = x
@@ -95,3 +111,32 @@ class Board:
         if not computer_pieces:
             return True, PlayerType.Human
         return False, PlayerType.NoPlayer
+
+class Minimax:
+    """
+    Implementeaza algoritmul de cautare a mutarii optime
+    """
+    _rand = random.Random()
+
+    @staticmethod
+    def find_next_board(current_board):
+        """
+        Primeste o configuratie ca parametru, cauta mutarea optima si returneaza configuratia
+        care rezulta prin aplicarea acestei mutari optime
+        """
+        best_score = float('-inf')
+        best_moves = []
+
+        for piece in current_board.pieces:
+            if piece.player == PlayerType.Computer:
+                for move in piece.valid_moves(current_board):
+                    next_board = current_board.make_move(move)
+                    score = next_board.evaluation_function()
+                    if score > best_score:
+                        best_score = score
+                        best_moves = [move]
+                    elif score == best_score:
+                        best_moves.append(move)
+
+        best_move = Minimax._rand.choice(best_moves) if best_moves else None
+        return current_board.make_move(best_move) if best_move else current_board
