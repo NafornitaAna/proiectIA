@@ -6,9 +6,6 @@ class PlayerType:
     Human = 2
 
 class Move:
-    """
-    Reprezinta mutarea unei singure piese
-    """
     def __init__(self, piece_id, new_x, new_y):
         self.piece_id = piece_id
         self.new_x = new_x
@@ -113,17 +110,10 @@ class Board:
         return False, PlayerType.NoPlayer
 
 class Minimax:
-    """
-    Implementeaza algoritmul de cautare a mutarii optime
-    """
     _rand = random.Random()
 
     @staticmethod
     def find_next_board(current_board):
-        """
-        Primeste o configuratie ca parametru, cauta mutarea optima si returneaza configuratia
-        care rezulta prin aplicarea acestei mutari optime
-        """
         best_score = float('-inf')
         best_moves = []
 

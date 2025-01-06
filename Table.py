@@ -54,7 +54,7 @@ class SimpleCheckersApp:
         square_size = 50  # Tabla este 400x400 pixeli, deci 50x50 pe pătrățel
         piece_radius = square_size // 2 - 5  # Dimensiunea piesei
 
-        # Pozițiile pieselor
+        # Pozițiile pieselor negre și albe
         black_pieces = [
             (1, 0), (3, 0), (5, 0), (7, 0),
             (0, 1), (2, 1), (4, 1), (6, 1),
@@ -84,6 +84,12 @@ class SimpleCheckersApp:
         for x, y in white_pieces:
             x_center = square_size * x + square_size // 2
             y_center = square_size * y + square_size // 2
+            fill_color = (255, 255, 255)  # Culoare albă
+
+            # Dacă piesa este selectată, schimbă culoarea la roșu
+            if self.selected_piece and (x, y) == self.selected_piece:
+                fill_color = (255, 0, 0)  # Roșu
+
             self.buffer_draw.ellipse(
                 [
                     x_center - piece_radius,  # Stânga
@@ -91,7 +97,7 @@ class SimpleCheckersApp:
                     x_center + piece_radius,  # Dreapta
                     y_center + piece_radius,  # Jos
                 ],
-                fill=(255, 255, 255),  # Culoare albă
+                fill=fill_color,  # Culoare piesă
             )
 
         # Convertește buffer-ul într-un PhotoImage pentru afișare rapidă
@@ -100,36 +106,77 @@ class SimpleCheckersApp:
         # Desenează buffer-ul pe canvas într-o singură operațiune
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_buffer)
 
+    def highlight_piece_and_moves(self, piece):
+        square_size = 50
+        piece_radius = square_size // 2 - 5
+
+        # Evidențiem piesa selectată
+        x_center = piece.x * square_size + square_size // 2
+        y_center = piece.y * square_size + square_size // 2
+        self.buffer_draw.ellipse(
+            [
+                x_center - piece_radius,
+                y_center - piece_radius,
+                x_center + piece_radius,
+                y_center + piece_radius
+            ],
+            outline=(255, 0, 0),  # Bordură roșie
+            width=3
+        )
+
+        # Evidențiem mutările posibile
+        for move in piece.valid_moves(self.board):
+            x_highlight = move.new_x * square_size
+            y_highlight = move.new_y * square_size
+            self.buffer_draw.rectangle(
+                [x_highlight, y_highlight, x_highlight + square_size, y_highlight + square_size],
+                outline=(0, 255, 0),  # Bordură verde
+                width=2
+            )
+
+        # Actualizăm canvasul
+        self.tk_buffer = ImageTk.PhotoImage(self.buffer)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_buffer)
+
+
     def on_canvas_click(self, event):
         if self.current_player != PlayerType.Human:
             return
 
-        mouse_x = event.x // 125
-        mouse_y = 3 - (event.y // 125)
+        # Calculăm coordonatele mouse-ului pe tablă
+        square_size = 50
+        mouse_x = event.x // square_size
+        mouse_y = event.y // square_size
 
+        # Verificăm dacă este selectată o piesă
         if self.selected_piece is None:
-            # Selectează o piesă
-            for p in self.board.pieces:
-                if p.player == PlayerType.Human and p.x == mouse_x and p.y == mouse_y:
-                    self.selected_piece = p.id
+            # Caută o piesă umană în acea poziție
+            for piece in self.board.pieces:
+                if piece.player == PlayerType.Human and piece.x == mouse_x and piece.y == mouse_y:
+                    self.selected_piece = piece.id
                     self.draw_board()
+                    self.highlight_piece_and_moves(piece)
                     return
         else:
-            # Mută piesa selectată
+            # Mutăm piesa selectată
             selected_piece = self.board.pieces[self.selected_piece]
             move = Move(self.selected_piece, mouse_x, mouse_y)
 
-            if selected_piece.is_valid_move(self.board, move):
+            # Verificăm dacă mișcarea este validă
+            valid_moves = selected_piece.valid_moves(self.board)
+            if any(m.new_x == move.new_x and m.new_y == move.new_y for m in valid_moves):
+                self.board = self.board.make_move(move)
                 self.selected_piece = None
-                new_board = self.board.make_move(move)
-                self.board = new_board
                 self.draw_board()
-
                 self.current_player = PlayerType.Computer
                 self.check_finish()
-                
+
                 if self.current_player == PlayerType.Computer:
                     self.computer_move()
+            else:
+                # Deselectăm piesa dacă mutarea este invalidă
+                self.selected_piece = None
+                self.draw_board()
 
     def computer_move(self):
         next_board = Minimax.find_next_board(self.board)
