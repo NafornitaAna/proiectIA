@@ -7,7 +7,7 @@ class SimpleCheckersApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Simple Checkers")
-        
+
         # Configurare meniuri
         menu_bar = tk.Menu(self.root)
         game_menu = tk.Menu(menu_bar, tearoff=0)
@@ -31,7 +31,7 @@ class SimpleCheckersApp:
             self.board_image = Image.open("tabla.jpg")
             self.board_photo = ImageTk.PhotoImage(self.board_image)
         except:
-            messagebox.showerror("Error", "Cannot load table.jpg")
+            messagebox.showerror("Error", "Cannot load tabla.jpg")
             self.root.quit()
 
         self.canvas.bind("<Button-1>", self.on_canvas_click)
@@ -51,53 +51,22 @@ class SimpleCheckersApp:
         self.buffer.paste(self.board_image, (0, 0))
 
         # Dimensiunea pătrățelelor
-        square_size = 50  # Tabla este 400x400 pixeli, deci 50x50 pe pătrățel
-        piece_radius = square_size // 2 - 5  # Dimensiunea piesei
+        square_size = 50
+        piece_radius = square_size // 2 - 5
 
-        # Pozițiile pieselor negre și albe
-        black_pieces = [
-            (1, 0), (3, 0), (5, 0), (7, 0),
-            (0, 1), (2, 1), (4, 1), (6, 1),
-            (1, 2), (3, 2), (5, 2), (7, 2),
-        ]
-        white_pieces = [
-            (0, 5), (2, 5), (4, 5), (6, 5),
-            (1, 6), (3, 6), (5, 6), (7, 6),
-            (0, 7), (2, 7), (4, 7), (6, 7),
-        ]
-
-        # Desenează piesele negre
-        for x, y in black_pieces:
-            x_center = square_size * x + square_size // 2
-            y_center = square_size * y + square_size // 2
+        # Desenează tabla
+        for piece in self.board.pieces:
+            x_center = square_size * piece.x + square_size // 2
+            y_center = square_size * piece.y + square_size // 2
+            color = (255, 0, 0) if (piece.x, piece.y) == self.selected_piece else (0, 0, 0) if piece.player == PlayerType.Computer else (255, 255, 255)
             self.buffer_draw.ellipse(
                 [
-                    x_center - piece_radius,  # Stânga
-                    y_center - piece_radius,  # Sus
-                    x_center + piece_radius,  # Dreapta
-                    y_center + piece_radius,  # Jos
+                    x_center - piece_radius,
+                    y_center - piece_radius,
+                    x_center + piece_radius,
+                    y_center + piece_radius,
                 ],
-                fill=(0, 0, 0),  # Culoare neagră
-            )
-
-        # Desenează piesele albe
-        for x, y in white_pieces:
-            x_center = square_size * x + square_size // 2
-            y_center = square_size * y + square_size // 2
-            fill_color = (255, 255, 255)  # Culoare albă
-
-            # Dacă piesa este selectată, schimbă culoarea la roșu
-            if self.selected_piece and (x, y) == self.selected_piece:
-                fill_color = (255, 0, 0)  # Roșu
-
-            self.buffer_draw.ellipse(
-                [
-                    x_center - piece_radius,  # Stânga
-                    y_center - piece_radius,  # Sus
-                    x_center + piece_radius,  # Dreapta
-                    y_center + piece_radius,  # Jos
-                ],
-                fill=fill_color,  # Culoare piesă
+                fill=color,
             )
 
         # Convertește buffer-ul într-un PhotoImage pentru afișare rapidă
@@ -106,75 +75,30 @@ class SimpleCheckersApp:
         # Desenează buffer-ul pe canvas într-o singură operațiune
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_buffer)
 
-    def highlight_piece_and_moves(self, piece):
-        square_size = 50
-        piece_radius = square_size // 2 - 5
-
-        # Evidențiem piesa selectată
-        x_center = piece.x * square_size + square_size // 2
-        y_center = piece.y * square_size + square_size // 2
-        self.buffer_draw.ellipse(
-            [
-                x_center - piece_radius,
-                y_center - piece_radius,
-                x_center + piece_radius,
-                y_center + piece_radius
-            ],
-            outline=(255, 0, 0),  # Bordură roșie
-            width=3
-        )
-
-        # Evidențiem mutările posibile
-        for move in piece.valid_moves(self.board):
-            x_highlight = move.new_x * square_size
-            y_highlight = move.new_y * square_size
-            self.buffer_draw.rectangle(
-                [x_highlight, y_highlight, x_highlight + square_size, y_highlight + square_size],
-                outline=(0, 255, 0),  # Bordură verde
-                width=2
-            )
-
-        # Actualizăm canvasul
-        self.tk_buffer = ImageTk.PhotoImage(self.buffer)
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_buffer)
-
-
     def on_canvas_click(self, event):
-        if self.current_player != PlayerType.Human:
-            return
-
-        # Calculăm coordonatele mouse-ului pe tablă
         square_size = 50
-        mouse_x = event.x // square_size
-        mouse_y = event.y // square_size
+        clicked_x = event.x // square_size
+        clicked_y = event.y // square_size
 
-        # Verificăm dacă este selectată o piesă
         if self.selected_piece is None:
-            # Caută o piesă umană în acea poziție
-            for piece in self.board.pieces:
-                if piece.player == PlayerType.Human and piece.x == mouse_x and piece.y == mouse_y:
-                    self.selected_piece = piece.id
-                    self.draw_board()
-                    self.highlight_piece_and_moves(piece)
-                    return
+            # Selectează piesa
+            if self.board.get_piece_at(clicked_x, clicked_y, PlayerType.Human):
+                self.selected_piece = (clicked_x, clicked_y)
+                self.draw_board()
         else:
-            # Mutăm piesa selectată
-            selected_piece = self.board.pieces[self.selected_piece]
-            move = Move(self.selected_piece, mouse_x, mouse_y)
-
-            # Verificăm dacă mișcarea este validă
-            valid_moves = selected_piece.valid_moves(self.board)
-            if any(m.new_x == move.new_x and m.new_y == move.new_y for m in valid_moves):
-                self.board = self.board.make_move(move)
+            # Mută piesa selectată
+            selected_x, selected_y = self.selected_piece
+            if self.board.is_valid_move(selected_x, selected_y, clicked_x, clicked_y):
+                self.board.move_piece(selected_x, selected_y, clicked_x, clicked_y)
                 self.selected_piece = None
                 self.draw_board()
+
                 self.current_player = PlayerType.Computer
                 self.check_finish()
-
                 if self.current_player == PlayerType.Computer:
                     self.computer_move()
             else:
-                # Deselectăm piesa dacă mutarea este invalidă
+                # Deselectează piesa dacă mutarea nu este validă
                 self.selected_piece = None
                 self.draw_board()
 
@@ -182,7 +106,6 @@ class SimpleCheckersApp:
         next_board = Minimax.find_next_board(self.board)
         self.board = next_board
         self.draw_board()
-
         self.current_player = PlayerType.Human
         self.check_finish()
 
@@ -190,9 +113,9 @@ class SimpleCheckersApp:
         finished, winner = self.board.check_finish()
         if finished:
             if winner == PlayerType.Computer:
-                messagebox.showinfo("Game Over", "Calculatorul a castigat!")
+                messagebox.showinfo("Game Over", "Calculatorul a câștigat!")
             elif winner == PlayerType.Human:
-                messagebox.showinfo("Game Over", "Ai castigat!")
+                messagebox.showinfo("Game Over", "Ai câștigat!")
             self.current_player = PlayerType.NoPlayer
 
     def new_game(self):
@@ -204,8 +127,9 @@ class SimpleCheckersApp:
         self.root.quit()
 
     def show_about(self):
-        about_text = ("Joc de dame")
+        about_text = "Joc de dame realizat în Python"
         messagebox.showinfo("Despre jocul Dame", about_text)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
