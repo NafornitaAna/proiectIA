@@ -3,7 +3,7 @@ from tkinter import messagebox
 from GameClasses import Board, Move, Minimax, PlayerType
 from PIL import Image, ImageTk, ImageDraw
 
-class SimpleCheckersApp:
+class GameApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Simple Checkers")
@@ -133,5 +133,5 @@ class SimpleCheckersApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SimpleCheckersApp(root)
+    app = GameApp(root)
     root.mainloop()
