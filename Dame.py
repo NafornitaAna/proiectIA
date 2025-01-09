@@ -1,6 +1,6 @@
 ﻿import tkinter as tk
 from tkinter import messagebox
-from GameClasses import Board, Piece, Move, Minimax, PlayerType
+from GameClasses import Board, Piece, Move, MonteCarlo, PlayerType
 from PIL import Image, ImageTk, ImageDraw
 
 class GameApp:
@@ -108,7 +108,7 @@ class GameApp:
                     self.draw_board()
 
     def computer_move(self):
-        next_board = Minimax.find_next_board(self.board)
+        next_board = MonteCarlo.find_next_board(self.board)
         self.board = next_board
         self.draw_board()
         self.current_player = PlayerType.Human

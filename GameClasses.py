@@ -76,27 +76,37 @@ class Board:
             return True, PlayerType.Human
         return False, PlayerType.NoPlayer
 
-class Minimax:
+class MonteCarlo:
+    @staticmethod
+    def simulate_move(board, move):
+        next_board = Board()
+        next_board.pieces = [Piece(p.x, p.y, p.id, p.player) for p in board.pieces]
+        next_board.make_move(move)
+        return next_board
+
     @staticmethod
     def find_next_board(current_board):
-        best_score = float('-inf')
-        best_moves = []
-
+        all_moves = []
         for piece in current_board.pieces:
             if piece.player == PlayerType.Computer:
-                for move in piece.valid_moves(current_board):
-                    next_board = Board()
-                    next_board.pieces = [Piece(p.x, p.y, p.id, p.player) for p in current_board.pieces]
-                    next_board.make_move(move)
-                    score = next_board.evaluation_function()
-                    if score > best_score:
-                        best_score = score
-                        best_moves = [move]
-                    elif score == best_score:
-                        best_moves.append(move)
+                all_moves.extend(piece.valid_moves(current_board))
 
-        best_move = best_moves[0] if best_moves else None
-        if best_move:
-            current_board.make_move(best_move)
+        if not all_moves:
+            return current_board
+
+        move_scores = {}
+        for move in all_moves:
+            win_count = 0
+            total_simulations = 10  # Number of simulations per move
+
+            for _ in range(total_simulations):
+                next_board = MonteCarlo.simulate_move(current_board, move)
+                score = next_board.evaluation_function()
+                win_count += 1 if score > 0 else 0
+
+            move_scores[move] = win_count / total_simulations
+
+        best_move = max(move_scores, key=move_scores.get)
+        current_board.make_move(best_move)
         return current_board
 
