@@ -32,13 +32,16 @@ class Piece:
     def is_valid_move(self, current_board, move):
         if move.new_x < 0 or move.new_x >= 8 or move.new_y < 0 or move.new_y >= 8:
             return False
+        if current_board.get_piece_at(move.new_x, move.new_y, PlayerType.Computer) or \
+           current_board.get_piece_at(move.new_x, move.new_y, PlayerType.Human):
+            return False
+        if current_board.get_piece_at((move.new_x+self.x)/2, (move.new_y+self.y)/2, PlayerType.Computer):
+            return True
         if move.new_x != self.x+1 and move.new_x!=self.x-1:
             return False
         if move.new_y != self.y+1 and move.new_y!=self.y-1:
             return False
-        if current_board.get_piece_at(move.new_x, move.new_y, PlayerType.Computer) or \
-           current_board.get_piece_at(move.new_x, move.new_y, PlayerType.Human):
-            return False
+
         return True
 
 class Board:
@@ -61,7 +64,10 @@ class Board:
             self.pieces.append(Piece(x, y, i, PlayerType.Human))
 
     def get_piece_at(self, x, y, player_type):
-        return next((piece for piece in self.pieces if piece.x == x and piece.y == y and piece.player == player_type), None)
+        for piece in self.pieces:
+            if piece.x == x and piece.y == y and piece.player == player_type:
+                return piece
+        return None
 
     def make_move(self, move):
         for piece in self.pieces:

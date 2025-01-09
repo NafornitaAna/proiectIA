@@ -94,6 +94,9 @@ class GameApp:
             if selected_piece:
                 move = Move(selected_piece.id, clicked_x, clicked_y)
                 if selected_piece.is_valid_move(self.board, move):
+                    pieceComputer = self.board.get_piece_at((clicked_x+selected_piece.x)/2, (clicked_y+selected_piece.y)/2, PlayerType.Computer)
+                    if pieceComputer:
+                        self.board.pieces.remove(pieceComputer)
                     self.board.make_move(move)
                     self.selected_piece = None
                     self.draw_board()
