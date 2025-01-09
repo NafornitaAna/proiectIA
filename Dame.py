@@ -1,6 +1,6 @@
 ﻿import tkinter as tk
 from tkinter import messagebox
-from GameClasses import Board, Move, Minimax, PlayerType
+from GameClasses import Board, Piece, Move, Minimax, PlayerType
 from PIL import Image, ImageTk, ImageDraw
 
 class GameApp:
@@ -82,25 +82,30 @@ class GameApp:
 
         if self.selected_piece is None:
             # Selectează piesa
-            if self.board.get_piece_at(clicked_x, clicked_y, PlayerType.Human):
-                self.selected_piece = (clicked_x, clicked_y)
+            piece = self.board.get_piece_at(clicked_x, clicked_y, PlayerType.Human)
+            if piece:
+                self.selected_piece = (piece.x, piece.y)
                 self.draw_board()
         else:
             # Mută piesa selectată
             selected_x, selected_y = self.selected_piece
-            if self.board.is_valid_move(selected_x, selected_y, clicked_x, clicked_y):
-                self.board.move_piece(selected_x, selected_y, clicked_x, clicked_y)
-                self.selected_piece = None
-                self.draw_board()
+            selected_piece = self.board.get_piece_at(selected_x, selected_y, PlayerType.Human)
 
-                self.current_player = PlayerType.Computer
-                self.check_finish()
-                if self.current_player == PlayerType.Computer:
-                    self.computer_move()
-            else:
-                # Deselectează piesa dacă mutarea nu este validă
-                self.selected_piece = None
-                self.draw_board()
+            if selected_piece:
+                move = Move(selected_piece.id, clicked_x, clicked_y)
+                if selected_piece.is_valid_move(self.board, move):
+                    self.board.make_move(move)
+                    self.selected_piece = None
+                    self.draw_board()
+
+                    self.current_player = PlayerType.Computer
+                    self.check_finish()
+                    if self.current_player == PlayerType.Computer:
+                        self.computer_move()
+                else:
+                    # Deselectează piesa dacă mutarea nu este validă
+                    self.selected_piece = None
+                    self.draw_board()
 
     def computer_move(self):
         next_board = Minimax.find_next_board(self.board)
@@ -120,8 +125,9 @@ class GameApp:
 
     def new_game(self):
         self.board = Board()
-        self.current_player = PlayerType.Computer
-        self.computer_move()
+        self.current_player = PlayerType.Human
+        self.selected_piece = None
+        self.draw_board()
 
     def exit_game(self):
         self.root.quit()
@@ -129,7 +135,6 @@ class GameApp:
     def show_about(self):
         about_text = "Joc de dame realizat în Python"
         messagebox.showinfo("Despre jocul Dame", about_text)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
